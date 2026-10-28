@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any
+from typing import Any, Literal
 
 import httpx
 from pydantic import BaseModel, Field, create_model
@@ -90,6 +90,10 @@ def _build_args_schema(
     for field_name, field_schema in properties.items():
         python_type = _python_type(field_schema.get("type","string"))
         description = field_schema.get("description", "")
+        allowed_enum = field_schema.get("enum", None)
+        print(f"==========allowed enum is==========:{allowed_enum}===type:{type(allowed_enum)}")
+        if allowed_enum:
+            python_type = Literal[allowed_enum]
 
         if field_name in required_fields:
             fields[field_name]=(
@@ -100,7 +104,7 @@ def _build_args_schema(
             default = field_schema.get("default", None)
             fields[field_name]=(
                 python_type | None,
-                Field(defualt = default, description = description)
+                Field(default = default, description = description)
             )
     
     return create_model(f"{tool_name.title().replace("-","")}Args", **fields)
@@ -181,4 +185,5 @@ def build_remote_tools(
                 args_schema = args_schema
             )
         )
+    print(f"=========langchain tools are:============={langchain_tools}")
     return card, langchain_tools
